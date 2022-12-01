@@ -1,0 +1,21 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Job {
+  id          Int     @id @default(autoincrement())
+  name        String    // Human-readable nickname for job
+  startDate   DateTime  // Time for job to start running
+  endDate     DateTime? // Time for job to stop running, if interval-based job
+  cronString  String?   // Interval for job to run on, if interval-based job
+  url         String    // URL to send request to
+  data        String    // Data to send with request
+}
