@@ -11,11 +11,12 @@ datasource db {
 }
 
 model Job {
-  id          Int     @id @default(autoincrement())
-  name        String    // Human-readable nickname for job
-  startDate   DateTime  // Time for job to start running
-  endDate     DateTime? // Time for job to stop running, if interval-based job
-  cronString  String?   // Interval for job to run on, if interval-based job
-  url         String    // URL to send request to
-  data        String    // Data to send with request
+  id              Int       @id @default(autoincrement())
+  nickname        String    // Human-readable nickname for job
+  taskScript      String    // Name of script to run
+  scheduleDate    DateTime  // Time for job to start running
+  runImmediately  Boolean   // Should job run immediately? Ignores scheduleDate if true
+  finished        Boolean   // Status of job
+  url             String    // URL to send callback to
+  data            String    // Data to send with request, JSON formatted
 }

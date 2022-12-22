@@ -28,7 +28,7 @@ Trace:
 
 npm manifest: 
   {
-    "name": "friday-scheduler.aivant.me",
+    "name": "friday-server.aivant.me",
     "version": "1.0.0",
     "main": "index.js",
     "license": "MIT",

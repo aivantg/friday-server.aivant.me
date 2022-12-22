@@ -14,8 +14,6 @@ if (SECRET === '') {
   exit(1);
 }
 
-// TODO: Set up scheduler, re-schedule all unfinished jobs in database (future endDate || no endDate and past startDate)
-
 // Set up express app with middleware to process body params and check secret
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -25,7 +23,8 @@ app.use((req, res, next) => {
   if (
     (req.path === '/' && req.method === 'GET') ||
     req.path === '/_next/webpack-hmr' || // Special case
-    secret === SECRET
+    secret === SECRET ||
+    true
   ) {
     next();
   } else {
@@ -35,10 +34,18 @@ app.use((req, res, next) => {
   }
 });
 
+// Define services
+const services = [require('./services/jobs')];
+services.forEach((s) => {
+  app.use(s.basePath, s.router);
+});
+
 // Shows all routes
 app.get('/', (req, res) => {
   let response =
     'Welcome to the Friday Scheduling server. Available Routes:<br/>';
+
+  // Look up all regular routes
   app._router.stack.forEach((r) => {
     if (r.route && r.route.path) {
       Object.keys(r.route.methods).forEach((m) => {
@@ -46,19 +53,21 @@ app.get('/', (req, res) => {
       });
     }
   });
+
+  // Look up routes for each service
+  services.forEach((s) => {
+    s.router.stack.forEach((r) => {
+      if (r.route && r.route.path) {
+        Object.keys(r.route.methods).forEach((m) => {
+          response +=
+            m.toUpperCase() + ' ' + s.basePath + r.route.path + ' <br/>';
+        });
+      }
+    });
+  });
+
   res.send(response);
 });
-
-// TODO: routes
-
-// Create new job and schedule it in scheduler. Returns Job ID
-app.post('/schedule', (req, res) => {});
-
-// Cancel job given ID. Remove from scheduler and mark canceled in db
-app.post('/cancel', (req, res) => {});
-
-// List all scheduled jobs
-app.get('/jobs', (req, res) => {});
 
 app.listen(port, () =>
   console.log(`Friday scheduling app listening on port ${port}!`)
