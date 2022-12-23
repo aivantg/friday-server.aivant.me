@@ -1,28 +1,73 @@
-import express from 'express';
+import express, { response } from 'express';
 import Bree from 'bree';
 import dayjs from 'dayjs';
 import path from 'path';
 import { Job, PrismaClient } from '@prisma/client';
+import fetch from 'node-fetch';
 
 const router = express.Router();
 const prisma = new PrismaClient();
 let bree;
 
-const dbJobToBreeJob = (j: Job) => {
-  if (j.runImmediately) {
-    return {
-      name: j.nickname,
-      path: path.join(__dirname, 'scripts', j.taskScript),
-      timeout: 0,
-    };
-  } else {
-    return {
-      name: j.nickname,
-      path: path.join(__dirname, 'scripts', j.taskScript),
-      date: j.scheduleDate,
-    };
+// TODO: Error handling
+// TODO: Types!
+// TODO: Exposing job names instead of job scripts
+
+// HELPER FUNCTIONS
+
+// Handles message from job worker.
+// Checks status, updates database, and forwards data to callback URL if exists
+const workerMessageHandler = async (data) => {
+  const { name, message } = data;
+  const { success, result } = message;
+  const resultString = JSON.stringify(result);
+  console.log(
+    `DEBUG: Received finish message from worker ${name}. Saving result to database: ${resultString}`
+  );
+
+  // Update status of job in DB
+  const job = await prisma.job.update({
+    where: {
+      name,
+    },
+    data: {
+      finished: true,
+      success,
+      result: resultString,
+    },
+  });
+
+  if (success && job.callbackURL !== '') {
+    console.log(
+      `DEBUG: Sending result from worker ${name} to callback URL: ${job.callbackURL}`
+    );
+    const res = await fetch(job.callbackURL, {
+      method: 'POST',
+      body: resultString,
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const responseText = await res.text();
+    console.log(
+      `DEBUG: Response from callback for worker ${name}: ${responseText}`
+    );
   }
 };
+
+// Convert job from database to Bree job format
+const dbJobToBreeJob = (j: Job) => ({
+  name: j.name,
+  path: path.join(__dirname, 'scripts', j.taskScript),
+  timeout: j.runImmediately ? 0 : undefined,
+  date: j.runImmediately ? undefined : j.scheduleDate,
+  worker: {
+    workerData: {
+      dataString: j.data,
+      name: j.name,
+    },
+  },
+});
+
+// BREE SETUP
 
 // Load all unfinished jobs and setup Bree with existing jobs
 (async () => {
@@ -37,11 +82,14 @@ const dbJobToBreeJob = (j: Job) => {
     doRootCheck: false,
     removeCompleted: true,
     jobs: unfinishedJobs.map(dbJobToBreeJob),
+    workerMessageHandler,
   });
 
   // start jobs
   await bree.start();
 })();
+
+// ROUTES
 
 // Index: List all active jobs
 router.get('/', async (req, res) => {
@@ -51,22 +99,24 @@ router.get('/', async (req, res) => {
 
 // Create: Create new job
 router.post('/', async (req, res) => {
-  // TODO: Error handling
-  const { nickname, taskScript, scheduleDate, runImmediately, url, data } =
+  const { name, taskScript, scheduleDate, runImmediately, callbackURL, data } =
     req.body;
+  const timestamp = Date.now();
   const job = await prisma.job.create({
     data: {
-      nickname,
+      name: `${name}-${timestamp}`,
       taskScript,
-      scheduleDate: dayjs(scheduleDate).toDate(),
-      runImmediately,
-      url,
+      scheduleDate: dayjs(scheduleDate, 'MM/DD/YYYY h:mma').toDate(),
+      runImmediately: true,
+      callbackURL,
       data,
       finished: false,
+      success: false,
+      result: '',
     },
   });
   await bree.add(dbJobToBreeJob(job));
-  await bree.start(job.nickname);
+  await bree.start(job.name);
   res.json(job);
 });
 
@@ -85,7 +135,7 @@ router.post('/cancel', async (req, res) => {
       id,
     },
   });
-  bree.remove(deletedJob.nickname);
+  bree.remove(deletedJob.name);
   res.json(deletedJob);
 });
 
