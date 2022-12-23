@@ -11,7 +11,10 @@ let bree;
 
 // TODO: Error handling
 // TODO: Types!
-// TODO: Exposing job names instead of job scripts
+
+const availableJobs = {
+  timerCallback: 'timerCallback.js',
+};
 
 // HELPER FUNCTIONS
 
@@ -101,11 +104,19 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { name, taskScript, scheduleDate, runImmediately, callbackURL, data } =
     req.body;
+
+  // Validate job
+  if (!(taskScript in availableJobs)) {
+    return res.status(400).send({
+      message: `Invalid taskScript: ${taskScript}. Must be a valid job type returned by /jobs/types`,
+    });
+  }
+
   const timestamp = Date.now();
   const job = await prisma.job.create({
     data: {
       name: `${name}-${timestamp}`,
-      taskScript,
+      taskScript: availableJobs[taskScript],
       scheduleDate: dayjs(scheduleDate, 'MM/DD/YYYY h:mma').toDate(),
       runImmediately: true,
       callbackURL,
@@ -118,6 +129,11 @@ router.post('/', async (req, res) => {
   await bree.add(dbJobToBreeJob(job));
   await bree.start(job.name);
   res.json(job);
+});
+
+// Return available job types
+router.get('/types', async (req, res) => {
+  res.json(Object.keys(availableJobs));
 });
 
 // Status: Get status of a job
