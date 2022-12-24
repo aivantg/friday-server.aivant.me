@@ -1,9 +1,13 @@
 import express, { response } from 'express';
 import Bree from 'bree';
-import dayjs from 'dayjs';
 import path from 'path';
 import { Job, PrismaClient } from '@prisma/client';
 import fetch from 'node-fetch';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import utc from 'dayjs/plugin/utc';
+dayjs.extend(relativeTime);
+dayjs.extend(utc);
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -12,8 +16,9 @@ let bree;
 // TODO: Error handling
 // TODO: Types!
 
-const availableJobs = {
+const schedulableJobs = {
   timerCallback: 'timerCallback.js',
+  southwestCheckin: 'southwestCheckin.js',
 };
 
 // HELPER FUNCTIONS
@@ -102,29 +107,49 @@ router.get('/', async (req, res) => {
 
 // Create: Create new job
 router.post('/', async (req, res) => {
-  const { name, taskScript, scheduleDate, runImmediately, callbackURL, data } =
-    req.body;
+  const { name, taskScript, scheduleDate, callbackURL, data } = req.body;
 
   // Validate job
-  if (!(taskScript in availableJobs)) {
+  if (!(taskScript in schedulableJobs)) {
     return res.status(400).send({
-      message: `Invalid taskScript: ${taskScript}. Must be a valid job type returned by /jobs/types`,
+      message: `Invalid taskScript: ${taskScript}. Must be a valid schedulable job type returned by /jobs/types`,
     });
   }
 
-  const timestamp = Date.now();
+  // Setup job data
+  let jobData = {
+    name: `${name}-${Date.now()}`,
+    taskScript: schedulableJobs[taskScript],
+    callbackURL,
+    data,
+    finished: false,
+    success: false,
+    result: '',
+    scheduleDate: new Date(),
+    runImmediately: true,
+  };
+
+  // If scheduleDate exists, schedule job. Else, job will run immediately
+  if (scheduleDate) {
+    // Validate date is in the future TODO: deal with timezones
+    const date = dayjs(scheduleDate, 'MM/DD/YYYY h:mma');
+    if (dayjs().utcOffset(0).isAfter(date)) {
+      console.log(
+        `DEBUG: Received job with past date: ${date.toDate()}. Skipping.`
+      );
+      res.status(400).send("Can't schedule job with date in the past");
+      return;
+    }
+
+    console.log(`DEBUG: Scheduling ${taskScript} job for ${date.toNow()}`);
+    jobData['scheduleDate'] = date.toDate();
+    jobData['runImmediately'] = false;
+  } else {
+    console.log(`DEBUG: Running ${taskScript} job immediately`);
+  }
+
   const job = await prisma.job.create({
-    data: {
-      name: `${name}-${timestamp}`,
-      taskScript: availableJobs[taskScript],
-      scheduleDate: dayjs(scheduleDate, 'MM/DD/YYYY h:mma').toDate(),
-      runImmediately: true,
-      callbackURL,
-      data,
-      finished: false,
-      success: false,
-      result: '',
-    },
+    data: jobData,
   });
   await bree.add(dbJobToBreeJob(job));
   await bree.start(job.name);
@@ -133,7 +158,7 @@ router.post('/', async (req, res) => {
 
 // Return available job types
 router.get('/types', async (req, res) => {
-  res.json(Object.keys(availableJobs));
+  res.json(Object.keys(schedulableJobs));
 });
 
 // Status: Get status of a job
