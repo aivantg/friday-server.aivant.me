@@ -23,8 +23,7 @@ app.use((req, res, next) => {
   if (
     (req.path === '/' && req.method === 'GET') ||
     req.path === '/_next/webpack-hmr' || // Special case
-    secret === SECRET ||
-    true
+    secret === SECRET
   ) {
     next();
   } else {
