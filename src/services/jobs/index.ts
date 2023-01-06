@@ -3,11 +3,6 @@ import Bree from 'bree';
 import path from 'path';
 import { Job, PrismaClient } from '@prisma/client';
 import fetch from 'node-fetch';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import utc from 'dayjs/plugin/utc';
-dayjs.extend(relativeTime);
-dayjs.extend(utc);
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -132,17 +127,17 @@ router.post('/', async (req, res) => {
   // If scheduleDate exists, schedule job. Else, job will run immediately
   if (scheduleDate) {
     // Validate date is in the future TODO: deal with timezones
-    const date = dayjs(scheduleDate, 'MM/DD/YYYY h:mma');
-    if (dayjs().utcOffset(0).isAfter(date)) {
+    const date = new Date(scheduleDate);
+    if (new Date() > date) {
       console.log(
-        `DEBUG: Received job with past date: ${date.toDate()}. Skipping.`
+        `DEBUG: Received job with past date: ${date} (got from ${scheduleDate}). Skipping.`
       );
-      res.status(400).send("Can't schedule job with date in the past");
+      await res.status(400).send("Can't schedule job with date in the past");
       return;
     }
 
-    console.log(`DEBUG: Scheduling ${taskScript} job for ${date.toNow()}`);
-    jobData['scheduleDate'] = date.toDate();
+    console.log(`DEBUG: Scheduling ${taskScript} job for ${date}`);
+    jobData['scheduleDate'] = date;
     jobData['runImmediately'] = false;
   } else {
     console.log(`DEBUG: Running ${taskScript} job immediately`);

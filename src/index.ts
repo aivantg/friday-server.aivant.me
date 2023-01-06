@@ -17,6 +17,7 @@ if (SECRET === '') {
 // Set up express app with middleware to process body params and check secret
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
 app.use((req, res, next) => {
   let secret = req.body.secret;
 
@@ -29,6 +30,7 @@ app.use((req, res, next) => {
   } else {
     console.log(`Recieved unauthorized request at '${req.path}'. Body:`);
     console.log(req.body);
+    // console.log(req);
     res.send(401);
   }
 });
