@@ -120,7 +120,7 @@ router.post('/', async (req, res) => {
   let jobData = {
     name: `${name}-${Date.now()}`,
     taskScript: schedulableJobs[taskScript],
-    callbackURL,
+    callbackURL: callbackURL || '',
     data,
     finished: false,
     success: false,

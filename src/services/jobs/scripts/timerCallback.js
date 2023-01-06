@@ -1,6 +1,5 @@
 // Simple test task, template for future jobs
 const { workerData, parentPort } = require('worker_threads');
-const puppeteer = require('puppeteer');
 const { name, dataString } = workerData;
 const data = JSON.parse(dataString);
 
