@@ -40,7 +40,7 @@ const workerMessageHandler = async (data) => {
     },
   });
 
-  if (success && job.callbackURL !== '') {
+  if (job.callbackURL !== '') {
     console.log(
       `DEBUG: Sending result from worker ${name} to callback URL: ${job.callbackURL}`
     );
@@ -149,6 +149,8 @@ router.post('/', async (req, res) => {
   const job = await prisma.job.create({
     data: jobData,
   });
+  console.log(job);
+
   await bree.add(dbJobToBreeJob(job));
   await bree.start(job.name);
   res.json(job);
@@ -169,16 +171,20 @@ router.get('/status', async (req, res) => {
 // Cancel: Cancel job
 router.post('/cancel', async (req, res) => {
   const { id } = req.body;
+  console.log(`Trying to cancel job with ID: ${id}`);
   const deletedJob = await prisma.job.delete({
     where: {
       id,
     },
   });
+  console.log('Deleted following job:');
+  console.log(deletedJob);
   try {
-    bree.remove(deletedJob.name);
-  } catch (e) {
-    console.log('Error while trying to remove bree job. Not fatal');
-    console.log(e);
+    console.log('Trying to remove job from bree if exists');
+    await bree.remove(deletedJob.name);
+    console.log('Successfully removed');
+  } catch {
+    console.log('Removing job failed');
   }
   res.json(deletedJob);
 });

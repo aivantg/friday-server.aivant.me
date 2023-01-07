@@ -55,7 +55,15 @@ const main = async (data) => {
     await page.type('#passengerFirstName', firstName, { delay: 10 });
     await page.type('#passengerLastName', lastName, { delay: 10 });
     await page.click('.submit-button');
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
+    await page.waitForNetworkIdle();
+    if (await page.$('.message_error')) {
+      log('Unable to retrieve reservation');
+      finish(false, {
+        success: false,
+        errorMessage: 'Unable to retrieve reservation',
+      });
+      return;
+    }
     await page.click('.submit-button');
     await page.waitForNavigation({ waitUntil: 'networkidle2' });
     await sleep(3000);
