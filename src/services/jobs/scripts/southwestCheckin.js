@@ -102,12 +102,11 @@ const main = async (data) => {
     // Wrap up and close the browser
     log('Closing browser and wrapping up.');
     await browser.close();
-    finish(true, { boardingPosition });
+    finish(true, { success: true, boardingPosition });
   } catch (e) {
     log('Script failed');
     log(e);
-    throw e;
-    finish(false, e);
+    finish(false, { success: false, errorMessage: JSON.stringify(e) });
   }
 };
 

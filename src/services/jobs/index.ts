@@ -46,7 +46,10 @@ const workerMessageHandler = async (data) => {
     );
     const res = await fetch(job.callbackURL, {
       method: 'POST',
-      body: resultString,
+      body: JSON.stringify({
+        jobId: job.id,
+        result,
+      }),
       headers: { 'Content-Type': 'application/json' },
     });
     const responseText = await res.text();
@@ -171,7 +174,12 @@ router.post('/cancel', async (req, res) => {
       id,
     },
   });
-  bree.remove(deletedJob.name);
+  try {
+    bree.remove(deletedJob.name);
+  } catch (e) {
+    console.log('Error while trying to remove bree job. Not fatal');
+    console.log(e);
+  }
   res.json(deletedJob);
 });
 
