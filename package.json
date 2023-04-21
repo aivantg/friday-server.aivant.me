@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "engines": {
-    "node": "18.12.1",
+    "node": "16.18.1",
     "npm": "8.19.2",
     "yarn": "1.22.19"
   },
@@ -14,7 +14,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@prisma/client": "4.7.0",
+    "@prisma/client": "4.13.0",
     "@types/express": "^4.17.14",
     "@types/node": "^18.11.10",
     "body-parser": "^1.20.1",
@@ -23,7 +23,7 @@
     "dotenv-safe": "^8.2.0",
     "express": "^4.18.2",
     "node-fetch": "2.6.7",
-    "prisma": "^4.7.0",
+    "prisma": "^4.13.0",
     "puppeteer": "^19.4.1",
     "puppeteer-extra": "^3.3.4",
     "puppeteer-extra-plugin-stealth": "^2.11.1",
