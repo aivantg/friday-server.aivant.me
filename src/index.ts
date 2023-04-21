@@ -2,6 +2,18 @@ import { exit } from 'process';
 import express from 'express';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv-safe';
+import SegfaultHandler from 'segfault-handler';
+
+// Optionally specify a callback function for custom logging. This feature is currently only supported for Node.js >= v0.12 running on Linux.
+SegfaultHandler.registerHandler('crash.log', function (signal, address, stack) {
+  console.log('SEGFAULT');
+  console.log(signal);
+  console.log(address);
+  console.log(stack.join('\n'));
+  console.log('END SEFGAULT');
+  // Do what you want with the signal, address, or stack (array)
+  // This callback will execute before the signal is forwarded on.
+});
 
 // Set up environment variables
 dotenv.config();

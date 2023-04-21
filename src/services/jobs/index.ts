@@ -14,8 +14,8 @@ let bree;
 // TODO: Types!
 
 const schedulableJobs = {
-  timerCallback: 'timerCallback.ts',
-  southwestCheckin: 'southwestCheckin.ts',
+  timerCallback: 'timerCallback.js',
+  southwestCheckin: 'southwestCheckin.js',
 };
 
 // HELPER FUNCTIONS
