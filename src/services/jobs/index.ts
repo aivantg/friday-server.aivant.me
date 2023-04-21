@@ -4,8 +4,10 @@ import path from 'path';
 import { Job, PrismaClient } from '@prisma/client';
 import fetch from 'node-fetch';
 
+console.log('Running index.ts!');
 const router = express.Router();
 const prisma = new PrismaClient();
+console.log('Initialized prisma and router');
 let bree;
 
 // TODO: Error handling
@@ -75,8 +77,10 @@ const dbJobToBreeJob = (j: Job) => ({
 
 // BREE SETUP
 
+console.log('Setting up bree');
 // Load all unfinished jobs and setup Bree with existing jobs
 (async () => {
+  console.log('Running async bree setup function');
   // Pull all unfinished jobs from the database
   const unfinishedJobs = await prisma.job.findMany({
     where: { finished: false },
@@ -94,6 +98,8 @@ const dbJobToBreeJob = (j: Job) => ({
   // start jobs
   await bree.start();
 })();
+
+console.log('finished calling async bree setup function');
 
 // ROUTES
 
