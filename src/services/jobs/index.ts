@@ -4,10 +4,8 @@ import path from 'path';
 import { Job, PrismaClient } from '@prisma/client';
 import fetch from 'node-fetch';
 
-console.log('Running index.ts!');
 const router = express.Router();
 const prisma = new PrismaClient();
-console.log('Initialized prisma and router');
 let bree;
 
 // TODO: Error handling
