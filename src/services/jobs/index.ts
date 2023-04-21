@@ -78,7 +78,7 @@ const dbJobToBreeJob = (j: Job) => ({
 
 // BREE SETUP
 
-console.log('Setting up bree');
+console.log('Setting up breeaa');
 // Load all unfinished jobs and setup Bree with existing jobs
 (async () => {
   console.log('Running async bree setup function');
@@ -91,18 +91,18 @@ console.log('Setting up bree');
   console.log(unfinishedJobs);
 
   // Set up bree scheduler with jobs in the databse
-  bree = new Bree({
-    root: path.join(__dirname, 'scripts'),
-    doRootCheck: false,
-    removeCompleted: true,
-    jobs: unfinishedJobs.map(dbJobToBreeJob),
-    workerMessageHandler,
-  });
+  // bree = new Bree({
+  //   root: path.join(__dirname, 'scripts'),
+  //   doRootCheck: false,
+  //   removeCompleted: true,
+  //   jobs: unfinishedJobs.map(dbJobToBreeJob),
+  //   workerMessageHandler,
+  // });
 
   console.log('Set up bree');
 
   // start jobs
-  await bree.start();
+  // await bree.start();
   console.log('Finished starting bree!');
 })();
 
