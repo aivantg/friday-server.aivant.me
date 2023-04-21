@@ -23,6 +23,7 @@ const schedulableJobs = {
 // Handles message from job worker.
 // Checks status, updates database, and forwards data to callback URL if exists
 const workerMessageHandler = async (data) => {
+  console.log('Handling worker message');
   const { name, message } = data;
   const { success, result } = message;
   const resultString = JSON.stringify(result);
@@ -86,6 +87,9 @@ console.log('Setting up bree');
     where: { finished: false },
   });
 
+  console.log('Searched prisma for unfinished jobs');
+  console.log(unfinishedJobs);
+
   // Set up bree scheduler with jobs in the databse
   bree = new Bree({
     root: path.join(__dirname, 'scripts'),
@@ -95,8 +99,11 @@ console.log('Setting up bree');
     workerMessageHandler,
   });
 
+  console.log('Set up bree');
+
   // start jobs
   await bree.start();
+  console.log('Finished starting bree!');
 })();
 
 console.log('finished calling async bree setup function');
