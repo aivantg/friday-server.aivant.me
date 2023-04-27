@@ -60,7 +60,9 @@ const main = async (data) => {
     await page.type('#passengerFirstName', firstName, { delay: 10 });
     await page.type('#passengerLastName', lastName, { delay: 10 });
     await page.click('.submit-button');
-    await page.waitForNetworkIdle();
+    log('Submitted passenger data, waiting 5 seconds...')
+    await sleep(5000);
+    // await page.waitForNetworkIdle();
     if (await page.$('.message_error')) {
       log('Unable to retrieve reservation');
       finish(false, {
@@ -70,8 +72,8 @@ const main = async (data) => {
       return;
     }
     await page.click('.submit-button');
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
-    await sleep(3000);
+    // await page.waitForNavigation({ waitUntil: 'networkidle2' });
+    await sleep(5000);
 
     log('Trying to log boarding position');
     // Log checkin data
