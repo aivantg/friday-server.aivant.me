@@ -10,9 +10,12 @@ puppeteer.use(StealthPlugin());
 const { workerName, dataString } = workerData;
 const data = JSON.parse(dataString);
 
-const log = (s) => ({}); // console.log(`DEBUG-${workerName}: ${s}`);
-// log(`Raw worker data: ${JSON.stringify(workerData)}`);
-// log(`Worker started with data: ${dataString}`);
+const log = (s) => { // console.log(`DEBUG-${workerName}: ${s}`);
+  if (parentPort) {
+    parentPort.postMessage(s);
+}}; 
+log(`Raw worker data: ${JSON.stringify(workerData)}`);
+log(`Worker started with data: ${dataString}`);
 
 // Helper finish function. Should be copied over for all jobs
 const finish = (success, result) => {
@@ -118,7 +121,7 @@ const main = async (data) => {
     finish(false, { success: false, errorMessage: JSON.stringify(e) });
   }
 };
-// log("Hahahahaha")
-// log("Second log??")
+log("Hahahahaha");
+log("About to run main");
 main(data);
-// console.log("Reached end! Seeya")
+log("Finished running man");

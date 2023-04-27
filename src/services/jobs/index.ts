@@ -20,43 +20,44 @@ const schedulableJobs = {
 
 // Handles message from job worker.
 // Checks status, updates database, and forwards data to callback URL if exists
-const workerMessageHandler = async (data) => {
-  const { name, message } = data;
-  const { success, result } = message;
-  const resultString = JSON.stringify(result);
-  console.log(
-    `DEBUG: Received finish message from worker ${name}. Saving result to database: ${resultString}`
-  );
+const workerMessageHandler = (data) => {
+  console.log(data);
+  // const { name, message } = data;
+  // const { success, result } = message;
+  // const resultString = JSON.stringify(result);
+  // console.log(
+  //   `DEBUG: Received finish message from worker ${name}. Saving result to database: ${resultString}`
+  // );
 
-  // Update status of job in DB
-  const job = await prisma.job.update({
-    where: {
-      name,
-    },
-    data: {
-      finished: true,
-      success,
-      result: resultString,
-    },
-  });
+  // // Update status of job in DB
+  // const job = await prisma.job.update({
+  //   where: {
+  //     name,
+  //   },
+  //   data: {
+  //     finished: true,
+  //     success,
+  //     result: resultString,
+  //   },
+  // });
 
-  if (job.callbackURL !== '') {
-    console.log(
-      `DEBUG: Sending result from worker ${name} to callback URL: ${job.callbackURL}`
-    );
-    const res = await fetch(job.callbackURL, {
-      method: 'POST',
-      body: JSON.stringify({
-        jobId: job.id,
-        result,
-      }),
-      headers: { 'Content-Type': 'application/json' },
-    });
-    const responseText = await res.text();
-    console.log(
-      `DEBUG: Response from callback for worker ${name}: ${responseText}`
-    );
-  }
+  // if (job.callbackURL !== '') {
+  //   console.log(
+  //     `DEBUG: Sending result from worker ${name} to callback URL: ${job.callbackURL}`
+  //   );
+  //   const res = await fetch(job.callbackURL, {
+  //     method: 'POST',
+  //     body: JSON.stringify({
+  //       jobId: job.id,
+  //       result,
+  //     }),
+  //     headers: { 'Content-Type': 'application/json' },
+  //   });
+  //   const responseText = await res.text();
+  //   console.log(
+  //     `DEBUG: Response from callback for worker ${name}: ${responseText}`
+  //   );
+  // }
 };
 
 // Convert job from database to Bree job format
