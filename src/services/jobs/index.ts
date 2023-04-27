@@ -139,19 +139,23 @@ router.post('/', async (req, res) => {
   if (scheduleDate) {
     // Validate date is in the future TODO: deal with timezones
     const date = new Date(scheduleDate);
-    if (new Date() > date) {
+    const dayAgo = new Date();
+    dayAgo.setDate(dayAgo.getDate() - 1);
+    if (dayAgo > date) {
       console.log(
-        `DEBUG: Received job with past date: ${date} (got from ${scheduleDate}). Skipping.`
+        `DEBUG: Received job with date more than 1 day in past: ${date} (got from ${scheduleDate}). Skipping.`
       );
-      await res.status(400).send("Can't schedule job with date in the past");
+      await res.status(400).send("Can't schedule job with date more than one day in the past");
       return;
+    } else if (new Date() > date && dayAgo < date) { 
+      console.log(`DEBUG: Received job within 1 day. Scheduling immediately.`)
+    } else { 
+      console.log(`DEBUG: Scheduling ${taskScript} job for ${date}`);
+      jobData['scheduleDate'] = date;
+      jobData['runImmediately'] = false;
     }
-
-    console.log(`DEBUG: Scheduling ${taskScript} job for ${date}`);
-    jobData['scheduleDate'] = date;
-    jobData['runImmediately'] = false;
   } else {
-    console.log(`DEBUG: Running ${taskScript} job immediately`);
+    console.log(`DEBUG: No scheduleDate provided. Running ${taskScript} job immediately`);
   }
 
   const job = await prisma.job.create({
