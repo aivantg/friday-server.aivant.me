@@ -118,7 +118,8 @@ const main = async (data) => {
     finish(false, { success: false, errorMessage: JSON.stringify(e) });
   }
 };
-
+console.log("First log")
 log("Hahahahaha")
+log("Second log??")
 main(data);
 log("Reached end! Seeya")
