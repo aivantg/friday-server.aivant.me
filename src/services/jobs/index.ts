@@ -68,7 +68,7 @@ const dbJobToBreeJob = (j: Job) => ({
   worker: {
     workerData: {
       dataString: j.data,
-      name: j.name,
+      workerName: j.name,
     },
   },
 });

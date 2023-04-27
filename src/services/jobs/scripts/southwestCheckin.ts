@@ -11,7 +11,7 @@ const { workerName, dataString } = workerData;
 const data = JSON.parse(dataString);
 
 const log = (s) => console.log(`DEBUG-${workerName}: ${s}`);
-
+log(`Raw worker data: ${JSON.stringify(workerData)}`);
 log(`Worker started with data: ${dataString}`);
 
 // Helper finish function. Should be copied over for all jobs
@@ -31,6 +31,7 @@ const finish = (success, result) => {
 // Main function to run worker task
 const main = async (data) => {
   try {
+    log(`Beginning worker task`);
     const { confirmationNumber, firstName, lastName, phoneNumber, email } =
       data;
     let sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
