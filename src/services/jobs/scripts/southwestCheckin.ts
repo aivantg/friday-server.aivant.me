@@ -119,4 +119,6 @@ const main = async (data) => {
   }
 };
 
+log("Hahahahaha")
 main(data);
+log("Reached end! Seeya")
