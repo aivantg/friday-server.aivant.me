@@ -10,7 +10,7 @@ puppeteer.use(StealthPlugin());
 const { workerName, dataString } = workerData;
 const data = JSON.parse(dataString);
 
-const log = (s) => console.log(`DEBUG-${workerName}: ${s}`);
+const log = (s) => ({}); // console.log(`DEBUG-${workerName}: ${s}`);
 // log(`Raw worker data: ${JSON.stringify(workerData)}`);
 // log(`Worker started with data: ${dataString}`);
 
@@ -118,8 +118,7 @@ const main = async (data) => {
     finish(false, { success: false, errorMessage: JSON.stringify(e) });
   }
 };
-console.log("First log")
-log("Hahahahaha")
-log("Second log??")
+// log("Hahahahaha")
+// log("Second log??")
 main(data);
-log("Reached end! Seeya")
+// console.log("Reached end! Seeya")
