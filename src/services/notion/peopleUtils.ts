@@ -1,4 +1,4 @@
-import { Client } from '@notionhq/client';
+import { Client, collectPaginatedAPI } from '@notionhq/client';
 
 // Mapping of database type to notion database id.
 // This info isn't secret as nothing can be done with it if the database isn't public.
@@ -21,16 +21,15 @@ type PersonRow = {
 };
 
 export async function getAllPeople(notion: Client): Promise<Person[]> {
-  const response = await notion.databases.query({
-    database_id: PEOPLE_DATABASE,
-  });
+  const allPersonRows: PersonRow[] = (await collectPaginatedAPI(
+    notion.databases.query,
+    {
+      database_id: PEOPLE_DATABASE,
+    }
+  )) as unknown as PersonRow[];
 
-  if (!response.results) {
-    throw new Error('Notion API returned no results.');
-  }
-  return response.results.map((r: unknown) => {
+  return allPersonRows.map((personRow) => {
     // Assume people table returns responses in expected format.
-    const personRow = r as PersonRow;
     return {
       id: personRow.id,
       name: personRow.properties.Name.title[0].plain_text,

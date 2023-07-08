@@ -33,8 +33,7 @@ router.get('/', async (req, res) => {
 // Return json array with each row's properties
 router.get('/people', async (req, res) => {
   try {
-    const people = await getAllPeople(notion);
-    res.json(people);
+    res.send(await getAllPeople(notion));
   } catch (error) {
     res.status(400).json(error);
   }
