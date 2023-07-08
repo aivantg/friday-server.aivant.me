@@ -69,16 +69,14 @@ router.get('/peopleNames', async (req, res) => {
 router.get('/addPerson', async (req, res) => {
   try {
     const { name, location, notes, tags } = req.query;
-    if (!name || !location) {
-      res
-        .status(400)
-        .send('Missing one or more required parameters: name, location');
+    if (!name) {
+      res.status(400).send('Missing one or more required parameters: name');
     }
 
     res.send(
       await addNewPerson(notion, {
         name: name as string,
-        location: location as string,
+        location: location ? (location as string) : '',
         notes: notes ? (notes as string) : '',
         tags: tags ? (tags as string) : '',
       })

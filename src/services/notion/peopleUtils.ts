@@ -24,7 +24,7 @@ type PersonRow = {
   properties: {
     Name: { title: { plain_text: string } };
     Notes?: { rich_text: [{ plain_text: string }] };
-    Location: { multi_select: [{ name: string }] };
+    Location?: { multi_select: [{ name: string }] };
     Tags?: { multi_select: [{ name: string }] };
   };
 };
@@ -93,25 +93,31 @@ export async function addNewPerson(notion: Client, person: Omit<Person, 'id'>) {
           },
         ],
       },
-      Notes: {
-        rich_text: [
-          {
-            text: {
-              content: person.notes,
-            },
-          },
-        ],
-      },
-      Location: {
-        multi_select: person.location.split(',').map((s) => {
-          return { name: s.trim() };
-        }),
-      },
-      Tags: {
-        multi_select: person.tags.split(',').map((s) => {
-          return { name: s.trim() };
-        }),
-      },
+      Notes: person.notes
+        ? {
+            rich_text: [
+              {
+                text: {
+                  content: person.notes,
+                },
+              },
+            ],
+          }
+        : undefined,
+      Location: person.location
+        ? {
+            multi_select: person.location.split(',').map((s) => {
+              return { name: s.trim() };
+            }),
+          }
+        : undefined,
+      Tags: person.tags
+        ? {
+            multi_select: person.tags.split(',').map((s) => {
+              return { name: s.trim() };
+            }),
+          }
+        : undefined,
     },
   })) as PageObjectResponse;
   return result.url;
@@ -134,7 +140,7 @@ export async function getAllPeople(notion: Client): Promise<Person[]> {
         personRow.properties.Notes?.rich_text
           .map((t) => t.plain_text)
           .join(' ') ?? '',
-      location: personRow.properties.Location.multi_select
+      location: personRow.properties.Location?.multi_select
         .map((s) => s.name)
         .join(', '),
       tags: personRow.properties.Tags?.multi_select
