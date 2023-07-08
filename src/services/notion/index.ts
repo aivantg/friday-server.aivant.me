@@ -5,7 +5,7 @@ import {
   PageObjectResponse,
   PartialPageObjectResponse,
 } from '@notionhq/client/build/src/api-endpoints';
-import { getAllPeople } from './utils';
+import { getAllPeople } from './peopleUtils';
 
 /**
  * This application is a layer over the Notion API to help facilitate

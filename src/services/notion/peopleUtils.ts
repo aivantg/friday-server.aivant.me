@@ -2,9 +2,7 @@ import { Client } from '@notionhq/client';
 
 // Mapping of database type to notion database id.
 // This info isn't secret as nothing can be done with it if the database isn't public.
-const DATABASES = {
-  people: { id: 'a41b62454dba47f09b18cc3f6543938f' },
-};
+const PEOPLE_DATABASE = 'a41b62454dba47f09b18cc3f6543938f';
 
 export type Person = {
   id: string;
@@ -24,7 +22,7 @@ type PersonRow = {
 
 export async function getAllPeople(notion: Client): Promise<Person[]> {
   const response = await notion.databases.query({
-    database_id: DATABASES.people.id,
+    database_id: PEOPLE_DATABASE,
   });
 
   if (!response.results) {
