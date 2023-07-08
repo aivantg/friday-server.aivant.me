@@ -135,17 +135,18 @@ export async function getAllPeople(notion: Client): Promise<Person[]> {
     // Assume people table returns responses in expected format.
     return {
       id: personRow.id,
-      name: personRow.properties.Name.title[0].plain_text,
+      name: personRow.properties.Name.title[0]?.plain_text ?? '',
       notes:
         personRow.properties.Notes?.rich_text
           .map((t) => t.plain_text)
           .join(' ') ?? '',
-      location: personRow.properties.Location?.multi_select
-        .map((s) => s.name)
-        .join(', '),
-      tags: personRow.properties.Tags?.multi_select
-        .map((s) => s.name)
-        .join(','),
+      location:
+        personRow.properties.Location?.multi_select
+          .map((s) => s.name)
+          .join(', ') ?? '',
+      tags:
+        personRow.properties.Tags?.multi_select.map((s) => s.name).join(',') ??
+        '',
     };
   });
 }

@@ -41,7 +41,8 @@ app.use((req, res, next) => {
   } else {
     console.log(`Recieved unauthorized request at '${req.path}'. Body:`);
     console.log(req.body);
-    // console.log(req);
+    console.log('Query:');
+    console.log(req.query);
     res.send(401);
   }
 });
@@ -54,8 +55,7 @@ services.forEach((s) => {
 
 // Shows all routes
 app.get('/', (req, res) => {
-  let response =
-    'Welcome to the Friday Scheduling server. Available Routes:<br/>';
+  let response = 'Welcome to the Friday backend server. Available Routes:<br/>';
 
   // Look up all regular routes
   app._router.stack.forEach((r) => {
@@ -82,5 +82,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(port, () =>
-  console.log(`Friday scheduling app listening on port ${port}!`)
+  console.log(`Friday server app listening on port ${port}!`)
 );

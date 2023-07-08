@@ -32,58 +32,56 @@ if (!process.env.NOTION_TOKEN) {
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 const router = express.Router();
 
+const sendError = (req: express.Request, res: express.Response, error: any) => {
+  console.log(`Error while processing ${req.method} request at '${req.path}'`);
+  console.log(error);
+  res.status(400).send({
+    error: 'message' in error ? error.message : JSON.stringify(error),
+  });
+};
+
+const sendData = (req: express.Request, res: express.Response, data: any) => {
+  console.log(`Successfully processed ${req.method} request at '${req.path}'`);
+  res.send({ data });
+};
+
 /**
  * GET: /people
- * Returns JSON array of all people in people database
+ * Returns JSON object with an array of all people in people database
  * Includes properties: name, location, notes
  */
 router.get('/people', async (req, res) => {
   try {
-    res.send(await getAllPeople(notion));
+    sendData(req, res, await getAllPeople(notion));
   } catch (error) {
-    res.status(400).json(error);
+    sendError(req, res, error);
   }
 });
 
 /**
- * GET: /peopleNames
- * Returns JSON array of people names in people database
- */
-router.get('/peopleNames', async (req, res) => {
-  try {
-    const people = await getAllPeople(notion);
-    res.send(people.map((p) => p.name).join(','));
-  } catch (error) {
-    res.status(400).json(error);
-  }
-});
-
-/**
- * GET: /addPerson
+ * POST: /addPerson
  * Adds new person row to people database
  * Pulls out the following properties out of the query parameter:
  * - name
  * - location (multiple separated by commas)
  * - notes (optiona)
  */
-router.get('/addPerson', async (req, res) => {
+router.post('/addPerson', async (req, res) => {
   try {
-    const { name, location, notes, tags } = req.query;
+    const { name, location, notes, tags } = req.body;
     if (!name) {
-      res.status(400).send('Missing one or more required parameters: name');
+      throw new Error('Missing required parameter: name');
     }
 
-    res.send(
-      await addNewPerson(notion, {
-        name: name as string,
-        location: location ? (location as string) : '',
-        notes: notes ? (notes as string) : '',
-        tags: tags ? (tags as string) : '',
-      })
-    );
+    const result = await addNewPerson(notion, {
+      name: name as string,
+      location: location ? (location as string) : '',
+      notes: notes ? (notes as string) : '',
+      tags: tags ? (tags as string) : '',
+    });
+    sendData(req, res, result);
   } catch (error) {
-    console.log(error);
-    res.status(400).send(JSON.stringify(error));
+    sendError(req, res, error);
   }
 });
 
@@ -97,46 +95,47 @@ router.get('/findPerson', async (req, res) => {
   try {
     const { name } = req.query;
     if (!name) {
-      res.status(400).send('Missing required parameter: name');
+      throw new Error('Missing required parameter: name');
     }
 
     const personId = await findPersonIdByName(notion, name as string);
     if (!personId) {
-      res.status(400).send(`No person found with name: ${name}`);
+      throw new Error('No person found with name: ${name}');
     }
 
-    res.send(personId);
+    sendData(req, res, personId);
   } catch (error) {
-    res.status(400).send(JSON.stringify(error));
+    sendError(req, res, error);
   }
 });
 
 /**
- * GET: /addNoteToPerson
+ * POST: /addNoteToPerson
  * Adds note to person with given name. Note is added as children of person's page
  * If no person is found, throws error
  * If no note is provided, throws error
  * If note is added successfully, returns link to new block.
  */
-router.get('/addNoteToPerson', async (req, res) => {
+router.post('/addNoteToPerson', async (req, res) => {
   try {
-    const { name, note } = req.query;
+    const { name, note } = req.body;
     if (!name || !note) {
-      res
-        .status(400)
-        .send('Missing one or more required parameters: name, note');
-      return;
+      throw new Error('Missing one or more required parameters: name, note');
     }
 
     const personId = await findPersonIdByName(notion, name as string);
     if (!personId) {
-      res.status(400).send(`No person found with name: ${name}`);
-      return;
+      throw new Error('No person found with name: ${name}');
     }
 
-    res.send(await addNoteToPerson(notion, personId as string, note as string));
+    const result = await addNoteToPerson(
+      notion,
+      personId as string,
+      note as string
+    );
+    sendData(req, res, result);
   } catch (error) {
-    res.status(400).send(JSON.stringify(error));
+    sendError(req, res, error);
   }
 });
 
