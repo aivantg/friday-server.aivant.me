@@ -31,8 +31,7 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use((req, res, next) => {
-  let secret = req.body.secret;
-
+  let secret = req.body.secret || req.query.secret;
   if (
     (req.path === '/' && req.method === 'GET') ||
     req.path === '/_next/webpack-hmr' || // Special case
@@ -48,7 +47,7 @@ app.use((req, res, next) => {
 });
 
 // Define services
-const services = [require('./services/jobs')];
+const services = [require('./services/jobs'), require('./services/notion')];
 services.forEach((s) => {
   app.use(s.basePath, s.router);
 });
