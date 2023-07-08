@@ -123,7 +123,9 @@ export async function addNewPerson(notion: Client, person: Omit<Person, 'id'>) {
   return result.url;
 }
 
-export async function getAllPeople(notion: Client): Promise<Person[]> {
+export async function getAllPeople(
+  notion: Client
+): Promise<Record<string, Person>> {
   const allPersonRows: PersonRow[] = (await collectPaginatedAPI(
     notion.databases.query,
     {
@@ -131,22 +133,25 @@ export async function getAllPeople(notion: Client): Promise<Person[]> {
     }
   )) as unknown as PersonRow[];
 
-  return allPersonRows.map((personRow) => {
-    // Assume people table returns responses in expected format.
-    return {
-      id: personRow.id,
-      name: personRow.properties.Name.title[0]?.plain_text ?? '',
-      notes:
-        personRow.properties.Notes?.rich_text
-          .map((t) => t.plain_text)
-          .join(' ') ?? '',
-      location:
-        personRow.properties.Location?.multi_select
-          .map((s) => s.name)
-          .join(', ') ?? '',
-      tags:
-        personRow.properties.Tags?.multi_select.map((s) => s.name).join(',') ??
-        '',
-    };
-  });
+  return Object.fromEntries(
+    allPersonRows.map((personRow) => [
+      personRow.id,
+      {
+        id: personRow.id,
+        name: personRow.properties.Name.title[0]?.plain_text ?? '',
+        notes:
+          personRow.properties.Notes?.rich_text
+            .map((t) => t.plain_text)
+            .join(' ') ?? '',
+        location:
+          personRow.properties.Location?.multi_select
+            .map((s) => s.name)
+            .join(', ') ?? '',
+        tags:
+          personRow.properties.Tags?.multi_select
+            .map((s) => s.name)
+            .join(',') ?? '',
+      },
+    ])
+  );
 }
