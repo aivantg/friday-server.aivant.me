@@ -1,16 +1,7 @@
 import express, { response } from 'express';
 import { exit } from 'process';
 import { Client } from '@notionhq/client';
-import {
-  PageObjectResponse,
-  PartialPageObjectResponse,
-} from '@notionhq/client/build/src/api-endpoints';
-import {
-  addNewPerson,
-  addNoteToPerson,
-  findPersonIdByName,
-  getAllPeople,
-} from './peopleUtils';
+import { addNewPerson, addNoteToPerson, getPeople } from './peopleUtils';
 
 /**
  * This application is a layer over the Notion API to help facilitate
@@ -48,11 +39,16 @@ const sendData = (req: express.Request, res: express.Response, data: any) => {
 /**
  * GET: /people
  * Returns JSON object with an array of all people in people database
- * Includes properties: name, location, notes
+ * Optional query param: 'name' to search for people with given name
  */
 router.get('/people', async (req, res) => {
   try {
-    sendData(req, res, await getAllPeople(notion));
+    const { name } = req.query;
+    sendData(
+      req,
+      res,
+      await getPeople(notion, name ? (name as string) : undefined)
+    );
   } catch (error) {
     sendError(req, res, error);
   }
@@ -61,10 +57,11 @@ router.get('/people', async (req, res) => {
 /**
  * POST: /addPerson
  * Adds new person row to people database
- * Pulls out the following properties out of the query parameter:
+ * Pulls out the following properties out of the body:
  * - name
- * - location (multiple separated by commas)
+ * - location (optional, multiple separated by commas)
  * - notes (optiona)
+ * - tags (optional, multiple separated by commas)
  */
 router.post('/addPerson', async (req, res) => {
   try {
@@ -87,7 +84,7 @@ router.post('/addPerson', async (req, res) => {
 
 /**
  * POST: /addNoteToPerson
- * Adds note to person with given name. Note is added as children of person's page
+ * Adds note to person with given id. Note is added as children of person's page
  * If no person is found, throws error
  * If no note is provided, throws error
  * If multiple people with  name are found, chooses first person
@@ -95,21 +92,12 @@ router.post('/addPerson', async (req, res) => {
  */
 router.post('/addNoteToPerson', async (req, res) => {
   try {
-    const { name, note } = req.body;
-    if (!name || !note) {
-      throw new Error('Missing one or more required parameters: name, note');
+    const { id, note } = req.body;
+    if (!id || !note) {
+      throw new Error('Missing one or more required parameters: id, note');
     }
 
-    const personId = await findPersonIdByName(notion, name as string);
-    if (!personId) {
-      throw new Error(`No person found with name: ${name}`);
-    }
-
-    const result = await addNoteToPerson(
-      notion,
-      personId as string,
-      note as string
-    );
+    const result = await addNoteToPerson(notion, id as string, note as string);
     sendData(req, res, result);
   } catch (error) {
     sendError(req, res, error);

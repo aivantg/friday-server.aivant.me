@@ -1,9 +1,7 @@
 import { Client, collectPaginatedAPI } from '@notionhq/client';
 import {
-  AppendBlockChildrenResponse,
-  CreatePageResponse,
+  CreatePageParameters,
   PageObjectResponse,
-  search,
 } from '@notionhq/client/build/src/api-endpoints';
 
 // Mapping of database type to notion database id.
@@ -17,7 +15,10 @@ export type Person = {
   notes: string;
   location: string;
   tags: string;
+  url: string;
 };
+
+type CreatePersonParams = Omit<Person, 'id' | 'url'>;
 
 type PersonRow = {
   id: string;
@@ -29,24 +30,87 @@ type PersonRow = {
   };
 };
 
-export async function findPersonIdByName(
+const personRowToPerson = (personRow: PersonRow): Person => ({
+  id: personRow.id,
+  name: personRow.properties.Name.title[0]?.plain_text ?? '',
+  notes:
+    personRow.properties.Notes?.rich_text.map((t) => t.plain_text).join(' ') ??
+    '',
+  location:
+    personRow.properties.Location?.multi_select.map((s) => s.name).join(', ') ??
+    '',
+  tags:
+    personRow.properties.Tags?.multi_select.map((s) => s.name).join(',') ?? '',
+  url: `${BASE_URL}/${personRow.id.split('-').join('')}`,
+});
+
+const personToCreatePageParams = (
+  person: CreatePersonParams
+): CreatePageParameters => ({
+  parent: {
+    type: 'database_id',
+    database_id: PEOPLE_DATABASE,
+  },
+  properties: {
+    Name: {
+      title: [
+        {
+          text: {
+            content: person.name,
+          },
+        },
+      ],
+    },
+    Notes: person.notes
+      ? {
+          rich_text: [
+            {
+              text: {
+                content: person.notes,
+              },
+            },
+          ],
+        }
+      : undefined,
+    Location: person.location
+      ? {
+          multi_select: person.location.split(',').map((s) => {
+            return { name: s.trim() };
+          }),
+        }
+      : undefined,
+    Tags: person.tags
+      ? {
+          multi_select: person.tags.split(',').map((s) => {
+            return { name: s.trim() };
+          }),
+        }
+      : undefined,
+  },
+});
+
+export async function getPeople(
   notion: Client,
-  nameToSearch: string
-): Promise<string | undefined> {
-  const searchResults: PersonRow[] = (await collectPaginatedAPI(
+  searchString?: string
+): Promise<Record<string, Person>> {
+  const personRows: PersonRow[] = (await collectPaginatedAPI(
     notion.databases.query,
     {
       database_id: PEOPLE_DATABASE,
-      filter: {
-        property: 'Name',
-        rich_text: {
-          contains: nameToSearch,
-        },
-      },
+      filter: searchString
+        ? {
+            property: 'Name',
+            rich_text: {
+              contains: searchString,
+            },
+          }
+        : undefined,
     }
-  )) as unknown as PersonRow[];
+  )) as any as PersonRow[];
 
-  return searchResults[0]?.id;
+  return Object.fromEntries(
+    personRows.map(personRowToPerson).map((p) => [p.id, p])
+  );
 }
 
 // Append bulleted list item block to page with id: `personId`
@@ -73,85 +137,15 @@ export async function addNoteToPerson(
     ],
   });
   const resultId = newBlock.results[0].id.split('-').join('');
-  console.log(resultId);
   return `${BASE_URL}/${personId.split('-').join('')}#${resultId}`;
 }
 
-export async function addNewPerson(notion: Client, person: Omit<Person, 'id'>) {
-  const result = (await notion.pages.create({
-    parent: {
-      type: 'database_id',
-      database_id: PEOPLE_DATABASE,
-    },
-    properties: {
-      Name: {
-        title: [
-          {
-            text: {
-              content: person.name,
-            },
-          },
-        ],
-      },
-      Notes: person.notes
-        ? {
-            rich_text: [
-              {
-                text: {
-                  content: person.notes,
-                },
-              },
-            ],
-          }
-        : undefined,
-      Location: person.location
-        ? {
-            multi_select: person.location.split(',').map((s) => {
-              return { name: s.trim() };
-            }),
-          }
-        : undefined,
-      Tags: person.tags
-        ? {
-            multi_select: person.tags.split(',').map((s) => {
-              return { name: s.trim() };
-            }),
-          }
-        : undefined,
-    },
-  })) as PageObjectResponse;
-  return result.url;
-}
-
-export async function getAllPeople(
-  notion: Client
-): Promise<Record<string, Person>> {
-  const allPersonRows: PersonRow[] = (await collectPaginatedAPI(
-    notion.databases.query,
-    {
-      database_id: PEOPLE_DATABASE,
-    }
-  )) as unknown as PersonRow[];
-
-  return Object.fromEntries(
-    allPersonRows.map((personRow) => [
-      personRow.id,
-      {
-        id: personRow.id,
-        name: personRow.properties.Name.title[0]?.plain_text ?? '',
-        notes:
-          personRow.properties.Notes?.rich_text
-            .map((t) => t.plain_text)
-            .join(' ') ?? '',
-        location:
-          personRow.properties.Location?.multi_select
-            .map((s) => s.name)
-            .join(', ') ?? '',
-        tags:
-          personRow.properties.Tags?.multi_select
-            .map((s) => s.name)
-            .join(',') ?? '',
-      },
-    ])
-  );
+export async function addNewPerson(
+  notion: Client,
+  person: CreatePersonParams
+): Promise<Person> {
+  const result = (await notion.pages.create(
+    personToCreatePageParams(person)
+  )) as PageObjectResponse;
+  return personRowToPerson(result as any as PersonRow);
 }
