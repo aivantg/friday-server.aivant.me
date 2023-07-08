@@ -86,34 +86,11 @@ router.post('/addPerson', async (req, res) => {
 });
 
 /**
- * GET: /findPerson
- * Finds person by name and returns their id
- * If multiple people are found, picks first
- * If no people are found, throws error
- */
-router.get('/findPerson', async (req, res) => {
-  try {
-    const { name } = req.query;
-    if (!name) {
-      throw new Error('Missing required parameter: name');
-    }
-
-    const personId = await findPersonIdByName(notion, name as string);
-    if (!personId) {
-      throw new Error('No person found with name: ${name}');
-    }
-
-    sendData(req, res, personId);
-  } catch (error) {
-    sendError(req, res, error);
-  }
-});
-
-/**
  * POST: /addNoteToPerson
  * Adds note to person with given name. Note is added as children of person's page
  * If no person is found, throws error
  * If no note is provided, throws error
+ * If multiple people with  name are found, chooses first person
  * If note is added successfully, returns link to new block.
  */
 router.post('/addNoteToPerson', async (req, res) => {
@@ -125,7 +102,7 @@ router.post('/addNoteToPerson', async (req, res) => {
 
     const personId = await findPersonIdByName(notion, name as string);
     if (!personId) {
-      throw new Error('No person found with name: ${name}');
+      throw new Error(`No person found with name: ${name}`);
     }
 
     const result = await addNoteToPerson(
