@@ -55,7 +55,7 @@ router.get('/people', async (req, res) => {
 });
 
 /**
- * POST: /addPerson
+ * POST: /people
  * Adds new person row to people database
  * Pulls out the following properties out of the body:
  * - name
@@ -63,7 +63,7 @@ router.get('/people', async (req, res) => {
  * - notes (optiona)
  * - tags (optional, multiple separated by commas)
  */
-router.post('/addPerson', async (req, res) => {
+router.post('/people', async (req, res) => {
   try {
     const { name, location, notes, tags } = req.body;
     if (!name) {
@@ -83,14 +83,14 @@ router.post('/addPerson', async (req, res) => {
 });
 
 /**
- * POST: /addNoteToPerson
+ * PUT: /people
  * Adds note to person with given id. Note is added as children of person's page
  * If no person is found, throws error
  * If no note is provided, throws error
  * If multiple people with  name are found, chooses first person
  * If note is added successfully, returns link to new block.
  */
-router.post('/addNoteToPerson', async (req, res) => {
+router.put('/people', async (req, res) => {
   try {
     const { id, note } = req.body;
     if (!id || !note) {
