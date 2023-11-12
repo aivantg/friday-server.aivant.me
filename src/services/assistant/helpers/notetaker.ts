@@ -14,7 +14,7 @@ export const askNotetaker = async (
   params: AssistantRequest,
   model: OpenAIModel,
   attempts: number = 0
-): Promise<string | undefined> => {
+): Promise<string> => {
   if (attempts === MAX_ATTEMPTS) {
     throw new Error(
       `Couldn't get a function call from notetaker — max attempts reached: ${MAX_ATTEMPTS}}`
@@ -60,12 +60,11 @@ export const askNotetaker = async (
 const processNotetakerResponse = async (
   response: NotetakerResponse,
   originalMessage: string
-): Promise<string | undefined> => {
+): Promise<string> => {
   if (response.name === 'save_journal_entry') {
-    saveDayOneEntry(
-      `#${response.arguments.title}\n\n${response.arguments.summary}`
+    return saveDayOneEntry(
+      `# ${response.arguments.title}\n\n**Summary**: ${response.arguments.summary}\n\n**Transcript**: ${originalMessage}`
     );
-    return undefined;
   } else if (response.name === 'save_conversation_note') {
     const existingId = await findExistingNotionEntry(
       Databases.People,
@@ -79,10 +78,9 @@ const processNotetakerResponse = async (
     );
     return addNoteToRow(existingId, originalMessage);
   } else if (response.name === 'save_idea_note') {
-    saveDayOneEntry(
-      `#Idea: ${response.arguments.title}\n\n${response.arguments.summary}\n\n${originalMessage}`
+    return saveDayOneEntry(
+      `# Idea: ${response.arguments.title}\n\n**Summary**: ${response.arguments.summary}\n\n**Transcript**: ${originalMessage}`
     );
-    return undefined;
   } else {
     assertNever(response);
   }
@@ -129,7 +127,7 @@ const findExistingNotionEntry = async (
   }
 };
 
-const saveDayOneEntry = async (note: string) => {
+const saveDayOneEntry = async (note: string): Promise<string> => {
   const response = await fetch(
     'https://maker.ifttt.com/trigger/friday_to_dayone/with/key/13Z80uk8mT-kN-RWMAOPl',
     {
@@ -138,9 +136,10 @@ const saveDayOneEntry = async (note: string) => {
       headers: { 'Content-Type': 'application/json' },
     }
   );
-  const data = await response.json();
+  const data = await response.text();
   console.log('Saved day one entry and recieved following response');
   console.log(data);
+  return data;
 };
 
 const NOTETAKER_PARAMS = {

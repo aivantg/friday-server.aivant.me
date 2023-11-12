@@ -41,7 +41,7 @@ export type AssistantRequest = z.infer<typeof assistantRequestSchema>;
 type AssistantRequestHandler = (
   request: AssistantRequest,
   model: OpenAIModel
-) => Promise<string | undefined>;
+) => Promise<string>;
 
 const AssistantRequestHandlers: Record<
   AssistantRequest['type'],
@@ -53,7 +53,7 @@ const AssistantRequestHandlers: Record<
 export const askAssistant = async (
   request: AssistantRequest,
   model: OpenAIModel = 'gpt-3.5-turbo-1106'
-): Promise<string | undefined> => {
+): Promise<string> => {
   return AssistantRequestHandlers[request.type](request, model);
 };
 
