@@ -1,7 +1,7 @@
 import { Client, collectPaginatedAPI } from '@notionhq/client';
 import { PageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
 import { camelCase } from 'lodash';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { z } from 'zod';
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
@@ -56,7 +56,6 @@ export async function getAllRows(
   const rows = await collectPaginatedAPI(notion.databases.query, {
     database_id: database.id,
   });
-  console.log(rows);
   try {
     return Object.fromEntries(
       rows.map((row) => [
@@ -97,9 +96,9 @@ export async function addNoteToRow(
             {
               type: 'text',
               text: {
-                content: ` (note added via Friday on ${moment().format(
-                  'MMMM Do YYYY, h:mm a'
-                )})`,
+                content: ` (note added via Friday on ${moment()
+                  .tz('America/Los_Angeles')
+                  .format('MMMM Do YYYY, h:mm a')} PST)`,
               },
               annotations: {
                 italic: true,
