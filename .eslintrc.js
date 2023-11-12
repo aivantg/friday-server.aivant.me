@@ -3,4 +3,5 @@ module.exports = {
   parserOptions: {
     project: './tsconfig.json',
   },
+  rules: [{ 'require-await': 'error' }],
 };

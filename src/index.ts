@@ -2,18 +2,18 @@ import { exit } from 'process';
 import express from 'express';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv-safe';
-import SegfaultHandler from 'segfault-handler';
+// import SegfaultHandler from 'segfault-handler';
 
 // Optionally specify a callback function for custom logging. This feature is currently only supported for Node.js >= v0.12 running on Linux.
-SegfaultHandler.registerHandler('crash.log', function (signal, address, stack) {
-  console.log('SEGFAULT');
-  console.log(signal);
-  console.log(address);
-  console.log(stack.join('\n'));
-  console.log('END SEFGAULT');
-  // Do what you want with the signal, address, or stack (array)
-  // This callback will execute before the signal is forwarded on.
-});
+// SegfaultHandler.registerHandler('crash.log', function (signal, address, stack) {
+//   console.log('SEGFAULT');
+//   console.log(signal);
+//   console.log(address);
+//   console.log(stack.join('\n'));
+//   console.log('END SEFGAULT');
+//   // Do what you want with the signal, address, or stack (array)
+//   // This callback will execute before the signal is forwarded on.
+// });
 
 // Set up environment variables
 dotenv.config();
@@ -48,38 +48,42 @@ app.use((req, res, next) => {
 });
 
 // Define services
-const services = [require('./services/jobs'), require('./services/notion')];
+const services = [
+  require('./services/jobs'),
+  // require('./services/notion'),
+  require('./services/assistant'),
+];
 services.forEach((s) => {
   app.use(s.basePath, s.router);
 });
 
-// Shows all routes
-app.get('/', (req, res) => {
-  let response = 'Welcome to the Friday backend server. Available Routes:<br/>';
+// // Shows all routes
+// app.get('/', (req, res) => {
+//   let response = 'Welcome to the Friday backend server. Available Routes:<br/>';
 
-  // Look up all regular routes
-  app._router.stack.forEach((r) => {
-    if (r.route && r.route.path) {
-      Object.keys(r.route.methods).forEach((m) => {
-        response += m.toUpperCase() + ' ' + r.route.path + ' <br/>';
-      });
-    }
-  });
+//   // Look up all regular routes
+//   app._router.stack.forEach((r) => {
+//     if (r.route && r.route.path) {
+//       Object.keys(r.route.methods).forEach((m) => {
+//         response += m.toUpperCase() + ' ' + r.route.path + ' <br/>';
+//       });
+//     }
+//   });
 
-  // Look up routes for each service
-  services.forEach((s) => {
-    s.router.stack.forEach((r) => {
-      if (r.route && r.route.path) {
-        Object.keys(r.route.methods).forEach((m) => {
-          response +=
-            m.toUpperCase() + ' ' + s.basePath + r.route.path + ' <br/>';
-        });
-      }
-    });
-  });
+//   // Look up routes for each service
+//   services.forEach((s) => {
+//     s.router.stack.forEach((r) => {
+//       if (r.route && r.route.path) {
+//         Object.keys(r.route.methods).forEach((m) => {
+//           response +=
+//             m.toUpperCase() + ' ' + s.basePath + r.route.path + ' <br/>';
+//         });
+//       }
+//     });
+//   });
 
-  res.send(response);
-});
+//   res.send(response);
+// });
 
 app.listen(port, () =>
   console.log(`Friday server app listening on port ${port}!`)

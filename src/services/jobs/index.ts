@@ -6,7 +6,7 @@ import fetch from 'node-fetch';
 
 const router = express.Router();
 const prisma = new PrismaClient();
-let bree;
+let bree: Bree;
 
 // TODO: Error handling
 // TODO: Types!
@@ -16,14 +16,19 @@ const schedulableJobs = {
   southwestCheckin: 'southwestCheckin.js',
 };
 
+type ScheduleableJob = keyof typeof schedulableJobs;
+
 // HELPER FUNCTIONS
 
 // Handles message from job worker.
 // Checks status, updates database, and forwards data to callback URL if exists
-const workerMessageHandler = async (data) => {
+const workerMessageHandler = async (data: {
+  name: string;
+  message: { success?: boolean; result?: any };
+}) => {
   const { name, message } = data;
-  try { 
-    if('success' in message && 'result' in message) { 
+  try {
+    if ('success' in message && 'result' in message) {
       const { success, result } = message;
       const resultString = JSON.stringify(result);
       console.log(
@@ -58,12 +63,12 @@ const workerMessageHandler = async (data) => {
         console.log(
           `DEBUG [${name}]: Response from callback for worker: ${responseText}`
         );
-  }
-    } else { 
-      console.log(`DEBUG [${name}]: ${message}`)
+      }
+    } else {
+      console.log(`DEBUG [${name}]: ${message}`);
     }
-  } catch (e) { 
-    console.log(`DEBUG [${name}]: ${message}`)
+  } catch (e) {
+    console.log(`DEBUG [${name}]: ${message}`);
   }
 };
 
@@ -125,7 +130,7 @@ router.post('/', async (req, res) => {
   // Setup job data
   let jobData = {
     name: `${name}-${Date.now()}`,
-    taskScript: schedulableJobs[taskScript],
+    taskScript: schedulableJobs[taskScript as ScheduleableJob],
     callbackURL: callbackURL || '',
     data,
     finished: false,
@@ -145,17 +150,21 @@ router.post('/', async (req, res) => {
       console.log(
         `DEBUG: Received job with date more than 1 day in past: ${date} (got from ${scheduleDate}). Skipping.`
       );
-      await res.status(400).send("Can't schedule job with date more than one day in the past");
+      await res
+        .status(400)
+        .send("Can't schedule job with date more than one day in the past");
       return;
-    } else if (new Date() > date && dayAgo < date) { 
-      console.log(`DEBUG: Received job within 1 day. Scheduling immediately.`)
-    } else { 
+    } else if (new Date() > date && dayAgo < date) {
+      console.log(`DEBUG: Received job within 1 day. Scheduling immediately.`);
+    } else {
       console.log(`DEBUG: Scheduling ${taskScript} job for ${date}`);
       jobData['scheduleDate'] = date;
       jobData['runImmediately'] = false;
     }
   } else {
-    console.log(`DEBUG: No scheduleDate provided. Running ${taskScript} job immediately`);
+    console.log(
+      `DEBUG: No scheduleDate provided. Running ${taskScript} job immediately`
+    );
   }
 
   const job = await prisma.job.create({
