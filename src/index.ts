@@ -49,7 +49,7 @@ app.use((req, res, next) => {
 
 // Define services
 const services = [
-  // require('./services/jobs'),
+  require('./services/jobs'),
   // require('./services/notion'),
   require('./services/assistant'),
 ];
