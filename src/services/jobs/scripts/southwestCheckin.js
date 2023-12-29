@@ -10,10 +10,12 @@ puppeteer.use(StealthPlugin());
 const { workerName, dataString } = workerData;
 const data = JSON.parse(dataString);
 
-const log = (s) => { // console.log(`DEBUG-${workerName}: ${s}`);
+const log = (s) => {
+  // console.log(`DEBUG-${workerName}: ${s}`);
   if (parentPort) {
     parentPort.postMessage(s);
-}}; 
+  }
+};
 log(`Raw worker data: ${JSON.stringify(workerData)}`);
 log(`Worker started with data: ${dataString}`);
 
@@ -60,7 +62,7 @@ const main = async (data) => {
     await page.type('#passengerFirstName', firstName, { delay: 10 });
     await page.type('#passengerLastName', lastName, { delay: 10 });
     await page.click('.submit-button');
-    log('Submitted passenger data, waiting 5 seconds...')
+    log('Submitted passenger data, waiting 5 seconds...');
     await sleep(5000);
     // await page.waitForNetworkIdle();
     if (await page.$('.message_error')) {
@@ -85,6 +87,15 @@ const main = async (data) => {
     );
 
     log(`Boarding position: ${boardingPosition}`);
+
+    // Pass by new southwest digital bag check prompt
+    log('Waiting for 5 seconds to see if digital bag check prompt pops up');
+    await page.waitForSelector('[aria-label="Close pop up"]', {
+      timeout: 5000,
+    });
+    await page.click('[aria-label="Close pop up"]');
+    log('Tried to click close pop up button');
+    await sleep(1500);
 
     // Send a confirmation text if phoneNumber is supplied
     if (phoneNumber) {
@@ -124,7 +135,7 @@ const main = async (data) => {
     finish(false, { success: false, errorMessage: JSON.stringify(e) });
   }
 };
-log("Hahahahaha");
-log("About to run main");
+log('Hahahahaha');
+log('About to run main');
 main(data);
-log("Finished running man");
+log('Finished running man');
