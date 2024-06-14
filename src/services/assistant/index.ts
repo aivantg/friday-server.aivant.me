@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { exit } from 'node:process';
-import { handleRequest, AskSchema } from './handlers';
+import { handleAsk } from './handlers';
 import { sendData, sendError } from './utils/routing';
+import { askSchema } from './utils/types';
 import { z } from 'zod';
 
 /**
@@ -25,16 +26,13 @@ for (const v of REQUIRED_ENV_VARS) {
 const router = Router();
 
 /**
- * POST: /request
- * Makes a new request to the assistant
- * Takes in two params:
- * - request: the request to make
- * - source: the source of the request (e.g. 'siri shortcut')
+ * POST: /ask
+ * Makes a new ask to the assistant
+ * Expects body to conform to askSchema
  */
-router.post('/request', async (req, res) => {
+router.post('/ask', async (req, res) => {
   try {
-    const q = AskSchema.parse(req.body);
-    const response = await handleRequest(q);
+    const response = await handleAsk(askSchema.parse(req.body));
     sendData(req, res, response ?? 'No response, maybe check day one?');
   } catch (error) {
     sendError(req, res, error);
