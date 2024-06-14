@@ -7,7 +7,12 @@ import {
 } from './utils';
 import assertNever from 'assert-never';
 import fetch from 'node-fetch';
-import { Database, Databases, addNoteToRow, getAllRows } from './notionUtils';
+import {
+  Database,
+  Databases,
+  addNoteToRow,
+  getAllRows,
+} from '../utils/notionUtils';
 const MAX_ATTEMPTS = 1;
 
 export const askNotetaker = async (
