@@ -1,4 +1,4 @@
-import { exit } from 'process';
+import { exit } from 'node:process';
 import express from 'express';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv-safe';

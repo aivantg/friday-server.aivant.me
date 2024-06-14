@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
+  // provider = "sqlite" or "postgresql"
   provider = "postgresql"
-  // provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -22,4 +22,21 @@ model Job {
   result          String    // Result of job, if completeds
   callbackURL     String    // URL to send callback to
   data            String    // Data to send with request, JSON formatted
+}
+
+model TranscriptionRecord {
+  id            Int      @id @default(autoincrement())
+  fileHash      String   @unique
+  name          String   
+  transcription String
+  createdAt     DateTime @default(now())
+  lastRequestedAt DateTime @default(now())
+}
+
+model AskRecord { 
+  id            Int      @id @default(autoincrement())
+  type          String
+  askJson       String
+  responseJson  String
+  createdAt     DateTime @default(now())
 }

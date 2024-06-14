@@ -1,6 +1,13 @@
-import express from 'express';
-import { exit } from 'process';
-import { askAssistant, assistantRequestSchema } from './helpers/utils';
+import { Router } from 'express';
+import { exit } from 'node:process';
+import { handleAsk } from './handlers';
+import { sendData, sendError } from './utils/routing';
+import { askSchema } from './utils/types';
+import multer from 'multer';
+import path from 'node:path';
+import type { Request, Response } from 'express';
+import { transcribe } from './utils/openai';
+import { unlinkSync } from 'node:fs';
 
 /**
  * This application is a layer over the OpenAI API to help take requests
@@ -11,70 +18,68 @@ import { askAssistant, assistantRequestSchema } from './helpers/utils';
  */
 
 const REQUIRED_ENV_VARS = ['OPENAI_API_KEY', 'NOTION_TOKEN'];
-REQUIRED_ENV_VARS.forEach((v) => {
+for (const v of REQUIRED_ENV_VARS) {
   if (!process.env[v]) {
     console.log(
       `FATAL ERROR: env variable '${v}' must be set and non-empty if assistant service is installed.`
     );
     exit(1);
   }
+}
+
+const router = Router();
+
+/**
+ * POST: /ask
+ * Makes a new ask to the assistant
+ * Expects body to conform to askSchema
+ */
+router.post('/ask', async (req, res) => {
+  try {
+    const ask = askSchema.parse(req.body);
+    const response = await handleAsk(ask);
+    sendData(req, res, response);
+  } catch (error: unknown) {
+    sendError(req, res, error as Error);
+  }
 });
 
-const router = express.Router();
+// Set up multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
 
-const sendError = (req: express.Request, res: express.Response, error: any) => {
-  console.log(`Error while processing ${req.method} request at '${req.path}'`);
-  console.log(error);
-  res.status(400).send({
-    error: 'message' in error ? error.message : JSON.stringify(error),
-  });
-};
+const upload = multer({ storage: storage });
 
-const sendData = (req: express.Request, res: express.Response, data: any) => {
-  console.log(`Successfully processed ${req.method} request at '${req.path}'`);
-  res.send({ data });
-};
-
-/**
- * GET: /request
- * Returns JSON object with an array of last 50 requests made
- * Accepts query params:
- * - limit: number of requests to return (default: 50)
- */
-// router.get('/request', async (req, res) => {
-//   try {
-//     const { queryLimit } = req.query;
-//     const limit = queryLimit ? parseInt(queryLimit as string) : 50;
-//     const requests = await prisma.request.findMany({ take: limit });
-//     sendData(req, res, requests);
-//   } catch (error) {
-//     sendError(req, res, error);
-//   }
-// });
-
-/**
- * POST: /request
- * Makes a new request to the assistant
- * Takes in two params:
- * - request: the request to make
- * - source: the source of the request (e.g. 'siri shortcut')
- */
-router.post('/request', async (req, res) => {
+router.post('/transcribe', upload.single('audio'), async (req, res) => {
   try {
-    const { request: queryRequest, source: querySource, model } = req.body;
-    if (!queryRequest) {
-      throw new Error('Missing required parameter: request');
+    console.log('Received transcription request');
+    console.log(req.body);
+    console.log(req.query);
+    console.log(req.file);
+
+    if (!req.file) {
+      res.status(400).send('No file uploaded.');
+      return;
     }
-    const request = assistantRequestSchema.parse(queryRequest);
-    const source = querySource ? (querySource as string) : 'unknown';
-
-    console.log(`Received assistant request from source: '${source}'`);
-    console.log(`Request: '${JSON.stringify(request)}'`);
-
-    const response = await askAssistant(request, model);
-    sendData(req, res, response ?? 'No response, maybe check day one?');
+    const filePath = req.file.path;
+    const transcription = await transcribe(filePath);
+    res.send(transcription);
   } catch (error) {
-    sendError(req, res, error);
+    console.error(error);
+    res
+      .status(500)
+      .send('An error occurred while transcribing the audio file.');
+  } finally {
+    // Clean up the uploaded file
+    if (req.file) {
+      unlinkSync(req.file.path);
+    }
   }
 });
 
