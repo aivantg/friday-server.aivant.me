@@ -1,7 +1,7 @@
 import type { Ask, AskResponse } from '../utils/types';
 
 export const handleBookNote = async (
-  request: Ask<'bookNote'>
+  ask: Ask<'bookNote'>
 ): Promise<AskResponse> => {
   return 'None';
 };

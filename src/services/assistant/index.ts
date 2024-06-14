@@ -3,7 +3,6 @@ import { exit } from 'node:process';
 import { handleAsk } from './handlers';
 import { sendData, sendError } from './utils/routing';
 import { askSchema } from './utils/types';
-import { z } from 'zod';
 
 /**
  * This application is a layer over the OpenAI API to help take requests
@@ -32,8 +31,9 @@ const router = Router();
  */
 router.post('/ask', async (req, res) => {
   try {
-    const response = await handleAsk(askSchema.parse(req.body));
-    sendData(req, res, response ?? 'No response, maybe check day one?');
+    const ask = askSchema.parse(req.body);
+    const response = await handleAsk(ask);
+    sendData(req, res, response);
   } catch (error) {
     sendError(req, res, error);
   }
