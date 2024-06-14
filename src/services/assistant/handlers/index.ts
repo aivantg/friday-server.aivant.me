@@ -1,30 +1,24 @@
 import { z } from 'zod';
 import { handleBookNote } from './bookNote';
 import { handleConversationNote } from './conversationNote';
-import { handleGenericRequest } from './genericRequest';
+import { handleGenericAsk } from './genericAsk';
 import { handleJournalEntry } from './journalEntry';
-import type {
-  AssistantRequest,
-  AssistantRequestHandler,
-  AssistantRequestType,
-} from '../utils/types';
+import type { Ask, AskHandler, AskType } from '../utils/types';
 
-const AssistantRequestHandlers: {
-  [K in AssistantRequestType]: AssistantRequestHandler<K>;
+const AskHandlers: {
+  [K in AskType]: AskHandler<K>;
 } = {
-  generic: handleGenericRequest,
+  generic: handleGenericAsk,
   journalEntry: handleJournalEntry,
   bookNote: handleBookNote,
   conversationNote: handleConversationNote,
 };
 
-export const handleRequest = async <T extends AssistantRequestType>(
-  req: AssistantRequest<T>
+export const handleRequest = async <T extends AskType>(
+  ask: Ask<T>
 ): Promise<string> => {
-  const { source, model, ask } = req;
-  console.log(
-    `Received assistant request from source: '${source}' using ${model}`
-  );
-  console.log(`Ask: '${JSON.stringify(ask, null, 2)}'`);
-  return AssistantRequestHandlers[ask.type](req);
+  const { referrer, model } = ask;
+  console.log(`Received ask from referrer: '${referrer}' using ${model}`);
+  console.log(`Full Ask: '${JSON.stringify(ask, null, 2)}'`);
+  return AskHandlers[ask.type](ask);
 };

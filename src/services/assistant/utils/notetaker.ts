@@ -1,22 +1,17 @@
 import { z } from 'zod';
 import {
-  AssistantRequest,
+  Ask,
   AssistantIntention,
   OpenAIModel,
   chatCompletion,
-} from './utils';
+} from '../helpers/utils';
 import assertNever from 'assert-never';
 import fetch from 'node-fetch';
-import {
-  Database,
-  Databases,
-  addNoteToRow,
-  getAllRows,
-} from '../utils/notionUtils';
+import { Database, Databases, addNoteToRow, getAllRows } from './notionUtils';
 const MAX_ATTEMPTS = 1;
 
 export const askNotetaker = async (
-  params: AssistantRequest,
+  params: Ask,
   model: OpenAIModel,
   attempts: number = 0
 ): Promise<string> => {

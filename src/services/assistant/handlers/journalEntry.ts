@@ -1,8 +1,7 @@
-import type { AssistantRequest, AssistantResponse } from '.';
-import type { OpenAIModel } from '../utils/chat';
+import type { Ask, AskResponse } from '../utils/types';
 
 export const handleJournalEntry = async (
-  request: AssistantRequest<'journalEntry'>
-): Promise<AssistantResponse> => {
+  request: Ask<'journalEntry'>
+): Promise<AskResponse> => {
   return 'None';
 };

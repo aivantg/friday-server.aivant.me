@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { exit } from 'node:process';
-import { handleRequest, assistantRequestSchema } from './handlers';
+import { handleRequest, AskSchema } from './handlers';
 import { sendData, sendError } from './utils/routing';
 import { z } from 'zod';
 
@@ -33,7 +33,7 @@ const router = Router();
  */
 router.post('/request', async (req, res) => {
   try {
-    const q = assistantRequestSchema.parse(req.body);
+    const q = AskSchema.parse(req.body);
     const response = await handleRequest(q);
     sendData(req, res, response ?? 'No response, maybe check day one?');
   } catch (error) {
