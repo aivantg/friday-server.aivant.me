@@ -19,5 +19,6 @@ export const handleAsk = async <T extends AskType>(
   const { referrer, model } = ask;
   console.log(`Received ask from referrer: '${referrer}' using ${model}`);
   console.log(`Full Ask: '${JSON.stringify(ask, null, 2)}'`);
-  return AskHandlers[ask.type](ask);
+  const handler: AskHandler<T> = AskHandlers[ask.type] as AskHandler<T>;
+  return handler(ask);
 };

@@ -8,5 +8,5 @@ export const sendError = (req: Request, res: Response, error: Error) => {
 
 export const sendData = (req: Request, res: Response, data: unknown) => {
   console.log(`Successfully processed ${req.method} request at '${req.path}'`);
-  res.status(200).send({ data });
+  res.send(data);
 };
