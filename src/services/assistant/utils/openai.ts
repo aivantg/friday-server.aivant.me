@@ -2,12 +2,16 @@ import OpenAI from 'openai';
 import type {
   ChatCompletion,
   ChatCompletionCreateParams,
+  // FunctionDefinition,
 } from 'openai/resources';
 import type { OpenAIModel } from './types';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { PrismaClient, TranscriptionRecord } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import type { TranscriptionRecord } from '@prisma/client';
+// import type { ZodSchema } from 'zod';
+// import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export const openai = new OpenAI();
 
@@ -90,3 +94,10 @@ export const transcribe = async (
 
   return newTranscription;
 };
+
+// export const zodSchemaToFunctionCallSchema = (
+//   schema: ZodSchema<unknown>
+// ): FunctionDefinition => {
+//   const jsonSchema = zodToJsonSchema(schema, { $refStrategy: 'none' });
+//   const definitions = jsonSchema.definitions;
+// };
