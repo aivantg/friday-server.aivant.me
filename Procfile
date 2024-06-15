@@ -1,3 +1,3 @@
 web: yarn start
 
-release: npx prisma db migrate deploy
+release: npx prisma migrate deploy
